@@ -1,5 +1,5 @@
-# Using this AMI: ami-08f40561 (Instance) NEWER: 1933fe70
-# ubuntu-maverick-10.10-amd64-server-20101225 NEWER: 20111001
+# Using this AMI: ami-9930fdf0
+# ubuntu-maverick-10.10-i386-server-20111001
 ### Script provided by DataStax.
 
 gpg --keyserver pgp.mit.edu --recv-keys 2B5C1B00
@@ -17,7 +17,7 @@ sudo apt-get -y --force-yes install git
 git config --global color.ui auto
 git config --global color.diff auto
 git config --global color.status auto
-git clone git://github.com/riptano/ComboAMI.git datastax_ami
+git clone git://github.com/edanuff/ComboAMI.git datastax_ami
 cd datastax_ami
 git checkout $(head -n 1 presetup/VERSION)
 

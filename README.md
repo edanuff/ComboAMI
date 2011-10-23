@@ -1,3 +1,6 @@
+NOTE: This version has been modified to enable turning off the RAID0
+configuration which is unavailable on EC2 small instances.
+
 Summary
 =======
 DataStax's Amazon Machine Image is the quickest way to get a Cassandra

@@ -25,6 +25,8 @@ userdata = False
 seedList = []
 options = False
 
+noRaid = False
+
 tokens = {}
 
 
@@ -113,6 +115,7 @@ def getAddresses():
         # parser.add_option("-r", "--reflector", action="store", type="string", dest="reflector")
         # Developmental option that allows for a non-interactive instance on EBS instances
         parser.add_option("-m", "--manual", action="store_true", dest="manual")
+        parser.add_option("--noraid", action="store_true", dest="noraid")
         
         # Grab provided reflector through provided userdata
         global options
@@ -133,6 +136,9 @@ def getAddresses():
                 conf.setConfig("AMI", "SmokeFile", options.smokefile)
             elif options.smokeurl or options.smokefile:
                 logger.warn('Both -u and -f have to be set together in order for smoke tests to run.')
+
+        if options and options.noraid:
+            noRaid = True
 
         conf.setConfig("AMI", "Type", "Cassandra")
         if options and options.deployment:
@@ -482,8 +488,31 @@ def constructEnv():
     logger.info('cassandra-env.sh configured.')
     
 def mountRAID():
+
     # Only create raid0 once. Mount all times in init.d script.
     if not conf.getConfig("AMI", "RAIDCreated"):
+
+        # If no raid setup is desired (i.e. for small instances)
+        if noRaid:
+            logger.info("Configuring Storage for non-Raid usage.\n")
+            with open(confPath + 'cassandra.yaml', 'r') as f:
+                yaml = f.read()
+                yaml = yaml.replace('/var/lib/cassandra/data', '/mnt/cassandra/data')
+                yaml = yaml.replace('/var/lib/cassandra/saved_caches',  '/mnt/cassandra/saved_caches')
+                yaml = yaml.replace('/var/lib/cassandra/commitlog', '/mnt/cassandra/commitlog')
+            with open(confPath + 'cassandra.yaml', 'w') as f:
+                f.write(yaml)
+            # Remove the old cassandra folders
+            subprocess.Popen("sudo rm -rf /var/log/cassandra/*", shell=True)
+            subprocess.Popen("sudo rm -rf /var/lib/cassandra/*", shell=True)
+            logger.exe('sudo chown -R cassandra:cassandra /var/lib/cassandra')
+            logger.exe('sudo chown -R cassandra:cassandra /var/log/cassandra')
+
+            # Never create raid array again
+            conf.setConfig("AMI", "RAIDCreated", True)
+
+            logger.info("Completed Storage Configuration.\n")
+            return
 
         # Remove EC2 default /mnt from fstab
         fstab = ''
